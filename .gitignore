@@ -1,0 +1,7 @@
+*
+
+#ignore everything except the following files
+!*.py
+!*.pdf
+!*.txt
+!*.gitignore
