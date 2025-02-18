@@ -1,7 +1,4 @@
-*
-
-#ignore everything except the following files
-!*.py
-!*.pdf
-!*.txt
-!*.gitignore
+nodemodule/
+.DS_Store
+api_key.json
+__pycache__/

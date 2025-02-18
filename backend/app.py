@@ -1,5 +1,5 @@
 import streamlit as st
-from chatbot import chat_with_ai
+from backend.chatbot_old import chat_with_ai
 
 
 st.set_page_config(page_title="Ankit's AI Chatbot", layout="wide")
