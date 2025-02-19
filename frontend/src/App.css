@@ -9,10 +9,10 @@ body {
 }
 
 .chat-container {
-  width: 90vw; /* Uses 90% of the viewport width */
-  max-width: 600px; /* Prevents it from getting too large */
-  height: 80vh; /* Uses 80% of the viewport height */
-  max-height: 700px; /* Ensures it doesn’t grow too tall */
+  width: 90vw;
+  max-width: 600px;
+  height: 80vh;
+  max-height: 700px;
   background: rgba(30, 41, 59, 0.9);
   border-radius: 12px;
   padding: 20px;
@@ -21,11 +21,10 @@ body {
   flex-direction: column;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .chat-container {
-    width: 95vw; /* Slightly more width on smaller screens */
-    height: 85vh; /* Slightly taller on smaller devices */
+    width: 95vw;
+    height: 85vh;
   }
 }
 
@@ -33,7 +32,7 @@ body {
   .chat-container {
     width: 100vw;
     height: 100vh;
-    border-radius: 0; /* Removes border-radius for a fullscreen mobile view */
+    border-radius: 0;
   }
 }
 
