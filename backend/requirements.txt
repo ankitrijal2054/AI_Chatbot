@@ -1,0 +1,14 @@
+flask
+flask-cors
+chromadb
+requests
+langchain
+huggingface-hub
+pydantic
+tqdm
+numpy
+scipy
+pillow
+torch
+transformers
+sentence-transformers

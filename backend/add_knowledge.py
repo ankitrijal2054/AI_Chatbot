@@ -21,13 +21,15 @@ else:
     embedding_function = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 # Initialize ChromaDB with persistent storage
-vector_store = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+vector_store = Chroma(persist_directory="../chroma_db", embedding_function=embedding_function)
 
 # Knowledge base to store in ChromaDB
 documents = [
     "### Personal Information\n"
     "Full Name: Ankit Rijal\n"
-    "Location: Dallas, Texas\n"
+    "Current Location: Dallas, Texas\n"
+    "Date of Birth: September 20, 1997\n"
+    "Place of Birth: Nepal\n"
     "Phone: (817) 703-8670\n"
     "Email: ankitrijal2054@gmail.com\n"
     "LinkedIn: https://www.linkedin.com/in/ankitrjl2054/\n"
