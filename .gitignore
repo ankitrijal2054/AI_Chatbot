@@ -3,3 +3,4 @@ nodemodule/
 api_key.json
 __pycache__/
 chroma_db/
+test.py

@@ -76,7 +76,8 @@ def chat():
     full_query = f'''Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 \n{retrieved_text}\n\n Note 1: If the context provided does not contain information relevant to the question, then reply as a normal chatbot.\n
 Note 2: If the context provided contains information relevant to the question, then reply as a first person based on the context.\n
-Note 3: When answering the question, make sure to provide a clear and concise response. And do not say that you are replying based on context.
+Note 3: When answering the question, make sure to provide a clear and concise response. And do not say that you are replying based on context.\n
+Note 4: Properly format your response to the question.\n
 \n\nQuestion: {user_query}'''
 
     # Get response from Grok AI

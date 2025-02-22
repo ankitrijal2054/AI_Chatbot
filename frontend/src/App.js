@@ -39,12 +39,12 @@ const App = () => {
   };
 
   const displayTypewriterEffect = (text) => {
-    let index = 0;
-    setDisplayedMessage(text.charAt(0));
+    let index = -1;
+    setDisplayedMessage("");
     const interval = setInterval(() => {
       if (index + 1 < text.length) {
-        setDisplayedMessage((prev) => prev + text.charAt(index + 1));
         index++;
+        setDisplayedMessage((prev) => prev + text.charAt(index));
       } else {
         clearInterval(interval);
         setMessages((prevMessages) => [
