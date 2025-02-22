@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 import requests
 import json
-from langchain_community.vectorstores import Chroma
+from langchain_postgres.vectorstores import PGVector
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 
 app = Flask(__name__)
@@ -12,14 +12,19 @@ CORS(app)  # Enable CORS for frontend communication
 # Load API keys from Railway environment variables
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 XAI_API_KEY = os.getenv("XAI_API_KEY")
+PG_CONNECTION_STRING = os.getenv("PG_CONNECTION_STRING")
 
 embedding_function = HuggingFaceInferenceAPIEmbeddings(
     api_key=HUGGINGFACE_API_KEY,
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-# Initialize ChromaDB with persistent storage
-vector_store = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+# Connect to PostgreSQL Vector Store
+vector_store = PGVector.from_connection_string(
+    PG_CONNECTION_STRING,
+    embedding=embedding_function,
+    collection_name="vector_store"
+)
 retriever = vector_store.as_retriever()
 
 # Function to get response from Grok AI
