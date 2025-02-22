@@ -19,12 +19,13 @@ embedding_function = HuggingFaceInferenceAPIEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-# Connect to PostgreSQL Vector Store
-vector_store = PGVector.from_connection_string(
-    PG_CONNECTION_STRING,
+# Retrieve existing vector store from PostgreSQL
+vector_store = PGVector.from_existing_index(
     embedding=embedding_function,
+    connection=PG_CONNECTION_STRING,
     collection_name="vector_store"
 )
+
 retriever = vector_store.as_retriever()
 
 # Function to get response from Grok AI
