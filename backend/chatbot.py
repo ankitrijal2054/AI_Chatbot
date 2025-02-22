@@ -28,7 +28,7 @@ else:
     embedding_function = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 # Initialize ChromaDB with persistent storage
-vector_store = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+vector_store = Chroma(persist_directory="../chroma_db", embedding_function=embedding_function)
 retriever = vector_store.as_retriever()
 
 # Function to get response from Grok AI
