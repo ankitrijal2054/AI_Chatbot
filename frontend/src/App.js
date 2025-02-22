@@ -24,7 +24,9 @@ const App = () => {
     setDisplayedMessage("");
 
     try {
-      const response = await fetch("http://localhost:5001/chat", {
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+      const response = await fetch(`${BACKEND_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: input }),
