@@ -3,8 +3,8 @@ from flask_cors import CORS
 import os
 import requests
 import json
-from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication

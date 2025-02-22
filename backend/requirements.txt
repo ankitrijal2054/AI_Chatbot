@@ -1,14 +1,8 @@
 flask
 flask-cors
-chromadb
-requests
 langchain
+langchain-community
+chromadb
 huggingface-hub
-pydantic
-tqdm
-numpy
-scipy
-pillow
-torch
-transformers
+requests
 sentence-transformers
