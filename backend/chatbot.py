@@ -1,31 +1,22 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import chromadb
 import os
 import requests
 import json
 from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceInferenceAPIEmbeddings
+from langchain.embeddings import HuggingFaceInferenceAPIEmbeddings
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
-# Load API keys from api_key.json
-with open("api_key.json", "r") as api_file:
-    api = json.load(api_file)
-HUGGINGFACE_API_KEY = api["HUGGINGFACE_API_KEY"]
-XAI_API_KEY = api["XAI_API_KEY"]
+# Load API keys from Railway environment variables
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
+XAI_API_KEY = os.getenv("XAI_API_KEY")
 
-# Choose embeddings based on environment
-if HUGGINGFACE_API_KEY:
-    print("Using Hugging Face API for embeddings...")
-    embedding_function = HuggingFaceInferenceAPIEmbeddings(
-        api_key=HUGGINGFACE_API_KEY,
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-else:
-    print("Using local embeddings...")
-    embedding_function = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+embedding_function = HuggingFaceInferenceAPIEmbeddings(
+    api_key=HUGGINGFACE_API_KEY,
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
 # Initialize ChromaDB with persistent storage
 vector_store = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
@@ -87,4 +78,3 @@ Note 4: Properly format your response to the question.\n
 
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5001)))
-
