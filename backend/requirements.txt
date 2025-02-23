@@ -15,6 +15,7 @@ pgvector
 pydantic
 numpy
 tqdm
+libpq-dev
 
 
 
