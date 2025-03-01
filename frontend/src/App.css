@@ -83,14 +83,15 @@ body {
   background: #252f3f;
   border-radius: 10px;
   padding: 10px;
+  gap: 10px; /* Adds spacing between input field and button */
 }
 
 /* Input Field */
 .chat-input {
   flex-grow: 1;
   border: none;
-  background: transparent;
-  color: white;
+  background: white;
+  color: #1e293b;
   font-size: 16px;
   outline: none;
   padding: 10px;
@@ -110,7 +111,6 @@ body {
 .clear-btn {
   background: #ef4444;
   color: white;
-  margin-right: 10px;
 }
 
 .clear-btn:hover {
