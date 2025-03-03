@@ -151,25 +151,28 @@ const App = () => {
         <div className="voice-chat-container">
           {voiceState === "default" && (
             <button className="voice-btn" onClick={startVoiceRecognition}>
-              🎤
+              Click to Speak
             </button>
           )}
           {voiceState === "listening" && (
             <div className="fancy-listening">
               <div className="listening-circle"></div>
-              <p>Listening...</p>
             </div>
           )}
           {voiceState === "processing" && (
             <div className="fancy-processing">
               <div className="spinner"></div>
-              <p>Processing...</p>
             </div>
           )}
           {voiceState === "talking" && (
             <div className="fancy-talking">
-              <div className="talking-animation"></div>
-              <p>Talking...</p>
+              <div className="talking-wave">
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+              </div>
             </div>
           )}
         </div>
