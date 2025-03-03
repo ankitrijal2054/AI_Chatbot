@@ -21,13 +21,13 @@ This is a custom AI chatbot application built using **React.js** for the fronten
 
 ## Screenshots
 
-![Text Chat Interface](screenshots/chat1.png)
+<img src="screenshots/chat1.png" alt="Text Chat Interface" width="600" />
 
-![Text Chat Demo](screenshots/chat2.gif)
+<img src="screenshots/chat2.gif" alt="Text Chat Demo" width="600" />
 
-![Voice Chat Interface](screenshots/chat3.png)
+<img src="screenshots/chat3.png" alt="Voice Chat Interface" width="600" />
 
-![Voice Chat Demo](screenshots/chat4.gif)
+<img src="screenshots/chat4.gif" alt="Voice Chat Demo" width="600" />
 
 ---
 
