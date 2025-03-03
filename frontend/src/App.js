@@ -7,6 +7,8 @@ const App = () => {
   const [isThinking, setIsThinking] = useState(false);
   const [displayedMessage, setDisplayedMessage] = useState("");
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  // New state for voice UI stages: "default", "listening", "processing", "talking"
+  const [voiceState, setVoiceState] = useState("default");
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -43,11 +45,8 @@ const App = () => {
     try {
       const response = await fetch("http://localhost:5001/clearchat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-
       const data = await response.json();
       console.log(data.response);
     } catch (error) {
@@ -79,7 +78,7 @@ const App = () => {
     setDisplayedMessage("");
   };
 
-  // Function to start voice recognition
+  // Function to start voice recognition with updated UI states
   const startVoiceRecognition = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -87,12 +86,14 @@ const App = () => {
       alert("Sorry, your browser does not support speech recognition.");
       return;
     }
+    setVoiceState("listening");
     const recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.start();
 
     recognition.onresult = async (event) => {
       const transcript = event.results[0][0].transcript;
+      setVoiceState("processing");
       try {
         const response = await fetch("http://localhost:5001/chat", {
           method: "POST",
@@ -100,20 +101,26 @@ const App = () => {
           body: JSON.stringify({ query: transcript }),
         });
         const data = await response.json();
+        setVoiceState("talking");
         speakResponse(data.response);
       } catch (error) {
         console.error("Error fetching voice response:", error);
+        setVoiceState("default");
       }
     };
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error:", event.error);
+      setVoiceState("default");
     };
   };
 
   // Function to speak the AI response using the browser's speech synthesis
   const speakResponse = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = () => {
+      setVoiceState("default");
+    };
     window.speechSynthesis.speak(utterance);
   };
 
@@ -130,9 +137,29 @@ const App = () => {
       </div>
       {isVoiceMode ? (
         <div className="voice-chat-container">
-          <button className="voice-btn" onClick={startVoiceRecognition}>
-            🎤
-          </button>
+          {voiceState === "default" && (
+            <button className="voice-btn" onClick={startVoiceRecognition}>
+              🎤
+            </button>
+          )}
+          {voiceState === "listening" && (
+            <div className="fancy-listening">
+              <div className="listening-circle"></div>
+              <p>Listening...</p>
+            </div>
+          )}
+          {voiceState === "processing" && (
+            <div className="fancy-processing">
+              <div className="spinner"></div>
+              <p>Processing...</p>
+            </div>
+          )}
+          {voiceState === "talking" && (
+            <div className="fancy-talking">
+              <div className="talking-animation"></div>
+              <p>Talking...</p>
+            </div>
+          )}
         </div>
       ) : (
         <>
