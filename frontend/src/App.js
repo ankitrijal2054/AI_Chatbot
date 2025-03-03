@@ -7,7 +7,7 @@ const App = () => {
   const [isThinking, setIsThinking] = useState(false);
   const [displayedMessage, setDisplayedMessage] = useState("");
   const [isVoiceMode, setIsVoiceMode] = useState(false);
-  // New state for voice UI stages: "default", "listening", "processing", "talking"
+  // Voice UI states: "default", "listening", "processing", "talking"
   const [voiceState, setVoiceState] = useState("default");
   const chatContainerRef = useRef(null);
 
@@ -101,8 +101,7 @@ const App = () => {
           body: JSON.stringify({ query: transcript }),
         });
         const data = await response.json();
-        setVoiceState("talking");
-        speakResponse(data.response);
+        await speakResponse(data.response);
       } catch (error) {
         console.error("Error fetching voice response:", error);
         setVoiceState("default");
@@ -115,13 +114,26 @@ const App = () => {
     };
   };
 
-  // Function to speak the AI response using the browser's speech synthesis
-  const speakResponse = (text) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.onend = () => {
+  // Function to fetch synthesized audio from the /tts endpoint and play it
+  const speakResponse = async (text) => {
+    try {
+      const response = await fetch("http://localhost:5001/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.onended = () => {
+        setVoiceState("default");
+      };
+      setVoiceState("talking");
+      audio.play();
+    } catch (error) {
+      console.error("Error synthesizing voice response:", error);
       setVoiceState("default");
-    };
-    window.speechSynthesis.speak(utterance);
+    }
   };
 
   return (

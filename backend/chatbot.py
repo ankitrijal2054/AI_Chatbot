@@ -7,6 +7,7 @@ from flask_cors import CORS
 import atexit
 from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceInferenceAPIEmbeddings
+from cartesia import Cartesia  # Import Cartesia for TTS
 
 app = Flask(__name__)
 CORS(app)
@@ -16,6 +17,7 @@ with open("api_key.json", "r") as api_file:
     api = json.load(api_file)
 HUGGINGFACE_API_KEY = api["HUGGINGFACE_API_KEY"]
 XAI_API_KEY = api["XAI_API_KEY"]
+CARTESIA_API_KEY = api["CARTESIA_API_KEY"]
 
 if HUGGINGFACE_API_KEY:
     embedding_function = HuggingFaceInferenceAPIEmbeddings(
@@ -115,14 +117,14 @@ def chat():
     if not user_query:
         return jsonify({"response": "Please provide a query."})
 
-    #getting chat history
+    # Getting chat history
     chat_history = get_chat_history()
 
     # Retrieve relevant context
     retrieved_docs = retriever.get_relevant_documents(user_query)
     retrieved_text = "\n".join([doc.page_content for doc in retrieved_docs])
     
-        # Combine retrieved knowledge with the query and chat history
+    # Combine retrieved knowledge with the query and chat history
     full_query = f'''Chat history:\n {chat_history}\n
     \nUse the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 \n{retrieved_text}\n\n Note 1: If the context provided does not contain information relevant to the question, then reply as a normal chatbot.\n
@@ -138,11 +140,41 @@ Note 4: Properly format your response to the question.\n
     update_chat_history(user_query, response)
 
     return jsonify({"response": response})
-        
+
 @app.route("/clearchat", methods=["POST"])
 def clear_chat():
     clear_chat_history()
     return jsonify({"response": "Chat history cleared."})
+
+# New TTS endpoint using Cartesia API for high-quality voice output
+@app.route("/tts", methods=["POST"])
+def tts():
+    data = request.get_json()
+    transcript = data.get("text", "")
+    if not transcript:
+        return jsonify({"error": "No text provided."}), 400
+
+    try:
+        if CARTESIA_API_KEY is None:
+            raise ValueError("CARTESIA_API_KEY is not set")
+        client = Cartesia(api_key=CARTESIA_API_KEY)
+        audio_bytes = client.tts.bytes(
+            model_id="sonic",
+            transcript=transcript,
+            voice_id="b9022c72-058c-4e6e-93c2-e7721aae9d59",
+            output_format={
+                "container": "wav",
+                "encoding": "pcm_f32le",
+                "sample_rate": 44100,
+            },
+        )
+        return app.response_class(
+            response=audio_bytes,
+            status=200,
+            mimetype="audio/wav"
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 atexit.register(clear_chat_history)
 
