@@ -38,6 +38,22 @@ const App = () => {
     }
   };
 
+  const clear_chat_history = async () => {
+    try {
+      const response = await fetch("http://localhost:5001/clearchat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      console.log(data.response);
+    } catch (error) {
+      console.error("Error clearing chat:", error);
+    }
+  };
+
   const displayTypewriterEffect = (text) => {
     let index = -1;
     setDisplayedMessage("");
@@ -57,6 +73,7 @@ const App = () => {
   };
 
   const clearChat = () => {
+    clear_chat_history();
     setMessages([]);
     setDisplayedMessage("");
   };
