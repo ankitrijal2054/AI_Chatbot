@@ -32,6 +32,27 @@ body {
   margin-bottom: 12px;
 }
 
+/* Toggle Button Container */
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.toggle-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.toggle-btn:hover {
+  background: #2563eb;
+}
+
 /* Chat Box */
 .chat-box {
   flex-grow: 1;
@@ -124,4 +145,27 @@ body {
 
 .send-btn:hover {
   background: #2563eb;
+}
+
+/* Voice Chat Styles */
+.voice-chat-container {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.voice-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  font-size: 36px;
+  cursor: pointer;
+}
+
+.voice-btn:hover {
+  background: #dc2626;
 }

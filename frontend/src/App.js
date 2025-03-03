@@ -6,6 +6,7 @@ const App = () => {
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [displayedMessage, setDisplayedMessage] = useState("");
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -78,53 +79,109 @@ const App = () => {
     setDisplayedMessage("");
   };
 
+  // Function to start voice recognition
+  const startVoiceRecognition = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Sorry, your browser does not support speech recognition.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.start();
+
+    recognition.onresult = async (event) => {
+      const transcript = event.results[0][0].transcript;
+      try {
+        const response = await fetch("http://localhost:5001/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: transcript }),
+        });
+        const data = await response.json();
+        speakResponse(data.response);
+      } catch (error) {
+        console.error("Error fetching voice response:", error);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+    };
+  };
+
+  // Function to speak the AI response using the browser's speech synthesis
+  const speakResponse = (text) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="chat-container">
       <h1 className="title">Ankit's AI Chat Assistant</h1>
-      <div className="chat-box">
-        <div className="chat-content" ref={chatContainerRef}>
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`message ${
-                msg.role === "user" ? "user-msg" : "assistant-msg"
-              }`}
-            >
-              <p>{msg.content}</p>
-            </div>
-          ))}
-          {isThinking && (
-            <div className="message assistant-msg">
-              <p>
-                Thinking<span className="dots">...</span>
-              </p>
-            </div>
-          )}
-          {displayedMessage && (
-            <div className="message assistant-msg">
-              <p>{displayedMessage}</p>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="input-box">
-        {messages.length > 0 && (
-          <button className="clear-btn" onClick={clearChat}>
-            🗑️
-          </button>
-        )}
-        <input
-          type="text"
-          className="chat-input"
-          placeholder="Type your message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-        />
-        <button className="send-btn" onClick={sendMessage}>
-          ➤
+      <div className="toggle-container">
+        <button
+          className="toggle-btn"
+          onClick={() => setIsVoiceMode(!isVoiceMode)}
+        >
+          {isVoiceMode ? "Switch to Text Chat" : "Switch to Voice Chat"}
         </button>
       </div>
+      {isVoiceMode ? (
+        <div className="voice-chat-container">
+          <button className="voice-btn" onClick={startVoiceRecognition}>
+            🎤
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="chat-box">
+            <div className="chat-content" ref={chatContainerRef}>
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`message ${
+                    msg.role === "user" ? "user-msg" : "assistant-msg"
+                  }`}
+                >
+                  <p>{msg.content}</p>
+                </div>
+              ))}
+              {isThinking && (
+                <div className="message assistant-msg">
+                  <p>
+                    Thinking<span className="dots">...</span>
+                  </p>
+                </div>
+              )}
+              {displayedMessage && (
+                <div className="message assistant-msg">
+                  <p>{displayedMessage}</p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="input-box">
+            {messages.length > 0 && (
+              <button className="clear-btn" onClick={clearChat}>
+                🗑️
+              </button>
+            )}
+            <input
+              type="text"
+              className="chat-input"
+              placeholder="Type your message..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+            />
+            <button className="send-btn" onClick={sendMessage}>
+              ➤
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
