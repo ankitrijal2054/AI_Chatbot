@@ -32,6 +32,27 @@ body {
   margin-bottom: 12px;
 }
 
+/* Toggle Button Container */
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.toggle-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.toggle-btn:hover {
+  background: #2563eb;
+}
+
 /* Chat Box */
 .chat-box {
   flex-grow: 1;
@@ -83,7 +104,7 @@ body {
   background: #252f3f;
   border-radius: 10px;
   padding: 10px;
-  gap: 10px; /* Adds spacing between input field and button */
+  gap: 10px;
 }
 
 /* Input Field */
@@ -124,4 +145,127 @@ body {
 
 .send-btn:hover {
   background: #2563eb;
+}
+
+/* Voice Chat Container */
+.voice-chat-container {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* Red Button (Default Voice UI) */
+.voice-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.voice-btn:hover {
+  background: #dc2626;
+}
+
+/* Fancy Listening UI */
+.fancy-listening {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.listening-circle {
+  width: 80px;
+  height: 80px;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: ripple 1.5s infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    border-color: rgba(239, 68, 68, 0);
+  }
+  50% {
+    transform: scale(1.2);
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+  100% {
+    transform: scale(1.5);
+    border-color: rgba(239, 68, 68, 0);
+  }
+}
+
+/* Fancy Processing UI */
+.fancy-processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid rgba(239, 68, 68, 0.3);
+  border-top: 6px solid #ef4444;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Fancy Talking UI (Waveform Animation) --- */
+.fancy-talking {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.talking-wave {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.talking-wave .bar {
+  width: 8px;
+  height: 20px;
+  background-color: #ef4444;
+  animation: bounce 1s infinite ease-in-out;
+}
+.talking-wave .bar:nth-child(1) {
+  animation-delay: 0s;
+}
+.talking-wave .bar:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.talking-wave .bar:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.talking-wave .bar:nth-child(4) {
+  animation-delay: 0.3s;
+}
+.talking-wave .bar:nth-child(5) {
+  animation-delay: 0.4s;
+}
+@keyframes bounce {
+  0%,
+  100% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1);
+  }
 }
