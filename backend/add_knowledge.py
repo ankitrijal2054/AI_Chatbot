@@ -1,29 +1,49 @@
-import chromadb
 import os
-from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceInferenceAPIEmbeddings
-import json
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEndpointEmbeddings, HuggingFaceEmbeddings
+from huggingface_hub import InferenceClient
 
-# Load API keys from api_key.json
-with open("api_key.json", "r") as api_file:
-    api = json.load(api_file)
+# ✅ Read HF token from environment
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-HUGGINGFACE_API_KEY = api["HUGGINGFACE_API_KEY"]
-
-if HUGGINGFACE_API_KEY:
-    print("Using Hugging Face API for embeddings...")
-    embedding_function = HuggingFaceInferenceAPIEmbeddings(
-        api_key=HUGGINGFACE_API_KEY,
+"""
+# ✅ Hybrid Embedding Setup (will use during deployment after fixing the dim issue)
+embedding_function = None
+if HF_TOKEN:
+    try:
+        print("🔑 Trying Hugging Face Inference API for embeddings...")
+        client = InferenceClient(
+            model="sentence-transformers/all-MiniLM-L6-v2",
+            token=HF_TOKEN
+        )
+        embedding_function = HuggingFaceEndpointEmbeddings(client=client)
+        # quick test to validate token
+        _ = embedding_function.embed_query("test")
+        print("✅ Using Hugging Face Inference API embeddings")
+    except Exception as e:
+        print(f"⚠️ HF API failed: {e}. Falling back to local embeddings...")
+        embedding_function = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+else:
+    print("💻 No HF token found. Using local Hugging Face embeddings...")
+    embedding_function = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
-else:
-    print("Using local embeddings...")
-    embedding_function = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+"""
+# ✅ For now, use local embeddings to avoid dim mismatch issues
+print("💻 Using local Hugging Face embeddings...")
+embedding_function = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
-# Initialize ChromaDB with persistent storage
-vector_store = Chroma(persist_directory="../chroma_db", embedding_function=embedding_function)
+# ✅ Initialize ChromaDB (auto-persist in v0.4+)
+vector_store = Chroma(
+    persist_directory="../chroma_db",
+    embedding_function=embedding_function
+)
 
-# Knowledge base to store in ChromaDB
+# --- Knowledge base documents ---
 documents = [
     "### Personal Information\n"
     "Full Name: Ankit Rijal\n"
@@ -112,8 +132,9 @@ documents = [
     "Earn AWS certification and gain expertise in cloud-based ML deployment.\n"
 ]
 
-# Insert documents into ChromaDB
-vector_store.add_texts(documents)
-vector_store.persist()  # Save the database
-print("Knowledge base successfully added to ChromaDB!")
-
+# --- Insert into ChromaDB ---
+if documents:
+    vector_store.add_texts(documents)
+    print(f"✅ {len(documents)} documents successfully added to ChromaDB!")
+else:
+    print("⚠️ No documents found to insert.")
