@@ -94,7 +94,7 @@ def chat_with_ai(query: str) -> str:
     print("Sending query to Google Gemini (new SDK)...")
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-flash",  # or gemini-1.5-pro if flash not supported
+            model="gemini-2.5-flash", 
             contents=query,
         )
         return response.text
@@ -133,6 +133,8 @@ Notes:
 4. Properly format your response.
 
 Question: {user_query}"""
+
+    print(full_query)
 
     response = chat_with_ai(full_query)
     update_chat_history(user_query, response)
