@@ -79,8 +79,9 @@ const App = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      const data = await response.json();
-      console.log(data.response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     } catch (error) {
       console.error("Error clearing chat:", error);
     }
@@ -99,17 +100,39 @@ const App = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
       const audioBlob = await response.blob();
+      
+      // Check if blob has valid content
+      if (audioBlob.size === 0) {
+        throw new Error("Received empty audio response");
+      }
+      
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
+      
+      audio.onerror = (e) => {
+        console.error("Audio playback error:", e);
+        setVoiceState("default");
+        URL.revokeObjectURL(audioUrl);
+      };
+      
       audio.onended = () => {
         setVoiceState("default");
+        URL.revokeObjectURL(audioUrl);
       };
+      
       setVoiceState("talking");
-      audio.play();
+      await audio.play();
     } catch (error) {
       console.error("Error synthesizing voice response:", error);
       setVoiceState("default");
+      alert(`Voice synthesis error: ${error.message}`);
     }
   }, []);
 
@@ -120,33 +143,82 @@ const App = () => {
       alert("Sorry, your browser does not support speech recognition.");
       return;
     }
-    setVoiceState("listening");
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.start();
+    
+    // Request microphone permission first
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(() => {
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        recognition.onstart = () => {
+          setVoiceState("listening");
+        };
 
-    recognition.onresult = async (event) => {
-      const transcript = event.results[0][0].transcript;
-      setVoiceState("processing");
-      try {
-        const response = await fetch("http://localhost:5001/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: transcript }),
-        });
-        const data = await response.json();
-        await speakResponse(data.response);
-      } catch (error) {
-        console.error("Error fetching voice response:", error);
+        recognition.onresult = async (event) => {
+          const transcript = event.results[0][0].transcript;
+          setVoiceState("processing");
+          try {
+            const response = await fetch("http://localhost:5001/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ query: transcript }),
+            });
+            const data = await response.json();
+            await speakResponse(data.response);
+          } catch (error) {
+            console.error("Error fetching voice response:", error);
+            setVoiceState("default");
+            alert("Failed to get response. Please try again.");
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.error("Speech recognition error:", event.error);
+          let errorMessage = "Speech recognition error: ";
+          
+          switch(event.error) {
+            case 'audio-capture':
+              errorMessage += "No microphone was found or microphone access was denied.";
+              break;
+            case 'not-allowed':
+              errorMessage += "Microphone permission was denied. Please allow microphone access.";
+              break;
+            case 'no-speech':
+              errorMessage += "No speech was detected. Please try again.";
+              break;
+            case 'network':
+              errorMessage += "Network error occurred.";
+              break;
+            default:
+              errorMessage += event.error;
+          }
+          
+          alert(errorMessage);
+          setVoiceState("default");
+        };
+        
+        recognition.onend = () => {
+          if (voiceState === "listening") {
+            setVoiceState("default");
+          }
+        };
+        
+        try {
+          recognition.start();
+        } catch (error) {
+          console.error("Error starting recognition:", error);
+          setVoiceState("default");
+          alert("Failed to start speech recognition. Please try again.");
+        }
+      })
+      .catch((error) => {
+        console.error("Microphone permission error:", error);
+        alert("Microphone access denied. Please allow microphone access in your browser settings.");
         setVoiceState("default");
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.error("Speech recognition error:", event.error);
-      setVoiceState("default");
-    };
-  }, [speakResponse]);
+      });
+  }, [speakResponse, voiceState]);
 
   const handleStartChat = () => {
     setShowWelcome(false);

@@ -31,3 +31,6 @@ pydantic>=2.8.0
 
 # Google Gemini SDK
 google-genai
+
+# Text-to-Speech
+cartesia>=1.0.0

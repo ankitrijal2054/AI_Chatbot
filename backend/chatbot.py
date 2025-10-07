@@ -205,30 +205,46 @@ def tts():
 
     try:
         if not CARTESIA_API_KEY:
+            print("❌ CARTESIA_API_KEY is not set")
             raise ValueError("CARTESIA_API_KEY is not set")
 
+        print(f"🎤 Generating speech for: {transcript[:50]}...")
         client_tts = Cartesia(api_key=CARTESIA_API_KEY)
-        audio_bytes = client_tts.tts.bytes(
-            model_id="sonic",
+        audio_generator = client_tts.tts.bytes(
+            model_id="sonic-english",
             transcript=transcript,
-            voice_id="b9022c72-058c-4e6e-93c2-e7721aae9d59",
+            voice={
+                "mode": "id",
+                "id": "b9022c72-058c-4e6e-93c2-e7721aae9d59"
+            },
             output_format={
                 "container": "wav",
-                "encoding": "pcm_f32le",
-                "sample_rate": 44100,
+                "encoding": "pcm_s16le",
+                "sample_rate": 24000,
             },
         )
+        
+        # Convert generator to bytes
+        audio_bytes = b"".join(audio_generator)
 
+        print(f"✅ Generated {len(audio_bytes)} bytes of audio")
         return app.response_class(
             response=audio_bytes,
             status=200,
             mimetype="audio/wav",
+            headers={
+                "Content-Type": "audio/wav",
+                "Content-Length": str(len(audio_bytes))
+            }
         )
     except Exception as e:
+        print(f"❌ TTS Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 # =========================================
-# Optional: Re-load Knowledge Base on Demand
+# Optional: Re-load Knowledge Base on Demands
 # =========================================
 @app.route("/refreshkb", methods=["POST"])
 def refresh_kb():
