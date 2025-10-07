@@ -1,140 +1,244 @@
 import os
+import hashlib
+from datetime import datetime, timezone
+
 from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEndpointEmbeddings, HuggingFaceEmbeddings
-from huggingface_hub import InferenceClient
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
 
-# ✅ Read HF token from environment
-HF_TOKEN = os.getenv("HF_TOKEN")
-
-"""
-# ✅ Hybrid Embedding Setup (will use during deployment after fixing the dim issue)
-embedding_function = None
-if HF_TOKEN:
-    try:
-        print("🔑 Trying Hugging Face Inference API for embeddings...")
-        client = InferenceClient(
-            model="sentence-transformers/all-MiniLM-L6-v2",
-            token=HF_TOKEN
-        )
-        embedding_function = HuggingFaceEndpointEmbeddings(client=client)
-        # quick test to validate token
-        _ = embedding_function.embed_query("test")
-        print("✅ Using Hugging Face Inference API embeddings")
-    except Exception as e:
-        print(f"⚠️ HF API failed: {e}. Falling back to local embeddings...")
-        embedding_function = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
-else:
-    print("💻 No HF token found. Using local Hugging Face embeddings...")
-    embedding_function = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-"""
-# ✅ For now, use local embeddings to avoid dim mismatch issues
+# =========================================
+# Embeddings (local to avoid dim mismatch)
+# =========================================
 print("💻 Using local Hugging Face embeddings...")
 embedding_function = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    model_name="sentence-transformers/all-MiniLM-L6-v2"  # 384-dim
 )
 
-# ✅ Initialize ChromaDB (auto-persist in v0.4+)
+# =========================================
+# Vector store (auto-persist in v0.4+)
+# =========================================
+COLLECTION_NAME = "ankit_rijal_kb"
+PERSIST_DIR = "../chroma_db"
+
 vector_store = Chroma(
-    persist_directory="../chroma_db",
-    embedding_function=embedding_function
+    collection_name=COLLECTION_NAME,
+    persist_directory=PERSIST_DIR,
+    embedding_function=embedding_function,
 )
 
-# --- Knowledge base documents ---
-documents = [
-    "### Personal Information\n"
-    "Full Name: Ankit Rijal\n"
-    "Current Location: Dallas, Texas\n"
-    "Date of Birth: September 20, 1997\n"
-    "Place of Birth: Nepal\n"
-    "Phone: (817) 703-8670\n"
-    "Email: ankitrijal2054@gmail.com\n"
-    "LinkedIn: https://www.linkedin.com/in/ankitrjl2054/\n"
-    "GitHub: https://github.com/ankitrijal2054\n"
-    "Portfolio: https://ankitrijal2054.github.io/portfolio_website/\n"
-    "Instagram: https://www.instagram.com/ankit_rjl/\n",
+# =========================================
+# Knowledge base (merged + expanded)
+# Store as sectioned blocks so we can chunk with metadata
+# =========================================
+KB_VERSION = "2025-10-07"
+UPDATED_AT = datetime.now(timezone.utc).isoformat()
 
-    "### Professional Summary\n"
-    "Ankit Rijal is an aspiring Machine Learning Engineer with a software development background. "
-    "He has experience in building scalable applications, is proficient in Python, C#, PostgreSQL, and ReactJS, "
-    "and has expertise in ML frameworks like TensorFlow, Keras, PyTorch, and scikit-learn. "
-    "He is skilled in data processing, system optimization, and developing data-driven solutions to enhance efficiency and innovation.\n",
+sections = [
+    {
+        "section": "Personal Information",
+        "category": "personal",
+        "keywords": "name, phone, email, location, contact, linkedin, github, portfolio, social",
+        "content": """
+Full Name: Ankit Rijal
+Date of Birth: September 20, 1997
+Place of Birth: Nepal
+Current Location: Dallas, Texas, USA
+Phone: (817) 703-8670
+Email: ankitrijal2054@gmail.com
+LinkedIn: https://www.linkedin.com/in/ankitrjl2054/
+GitHub: https://github.com/ankitrijal2054
+Portfolio: https://ankitrijal2054.github.io/portfolio_website/
+Instagram: https://www.instagram.com/ankit_rjl/
+"""
+    },
+    {
+        "section": "Professional Summary",
+        "category": "career",
+        "keywords": "summary, software engineer, AI engineer, full stack, cloud, LLM, RAG, CI/CD, AWS",
+        "content": """
+Ankit Rijal is a full-stack software engineer and aspiring AI engineer with 2.5+ years of experience building scalable, cloud-ready applications and RESTful APIs. He is proficient in Python, C#, TypeScript/JavaScript, ReactJS, SQL, and AWS, and has hands-on experience integrating generative AI features (LLMs, LangChain, RAG) into production-grade apps. He focuses on backend optimization, CI/CD automation, containerized deployment, and end-to-end MLOps workflows. He enjoys bridging AI and software engineering to ship practical, reliable, and human-centric products.
+"""
+    },
+    {
+        "section": "Education",
+        "category": "education",
+        "keywords": "masters, bachelors, university of the cumberlands, east central university, graduation",
+        "content": """
+Master’s in Artificial Intelligence — University of the Cumberlands, KY (Expected Aug 2025)
+Bachelor’s in Computer Science — East Central University, Ada, OK (May 2021)
+"""
+    },
+    {
+        "section": "Professional Experience",
+        "category": "experience",
+        "keywords": "reynolds and reynolds, keytrak, c#, .net, apis, ci/cd, git migration, jenkins to github actions",
+        "content": """
+Software Developer — The Reynolds and Reynolds Company (College Station, TX) — Jan 2022 to July 2024
+• Developed and maintained C#/.NET-based full-stack KeyTrak applications (desktop, web, mobile) used by 5,000+ enterprise customers.
+• Designed 30+ RESTful APIs in C# using ASP.NET Core and SOLID principles, improving modularity and performance.
+• Migrated legacy Jenkins CI/CD pipelines to GitHub Actions, reducing deployment time by ~30%.
+• Led version control migration from SVN to Git across an Agile team, improving collaboration and release efficiency.
+• Partnered with QA and Product to resolve production issues with clear documentation and timely updates.
+Tech: PostgreSQL, C#, .NET, ReactJS, TypeScript, PowerShell, Jenkins, GitHub Actions, Visual Studio, VS Code, Phabricator, Slack.
+"""
+    },
+    {
+        "section": "Projects",
+        "category": "projects",
+        "keywords": "guide2smart ai, adaptive quiz, generative ai chatbot, rag, chromadb, mlops, ai image assistant, streamlit, sentiment app, weather app",
+        "content": """
+Guide2Smart AI — Adaptive Quiz Generator
+Tech: Python, FastAPI, React, Google Gemini APIs
+• Generates MCQs, explanations, and summaries from uploaded study files using LLMs and a modular FastAPI backend.
 
-    "### Technical Skills\n"
-    "Machine Learning & AI: TensorFlow, Keras, PyTorch, scikit-learn, Hugging Face Transformers, Generative AI, "
-    "Transformer Architecture, CNN, RNN, LSTM, Attention Mechanisms, Autoencoders, GANs, Reinforcement Learning, "
-    "Streamlit, LangChain, RAG, ChromaDB.\n"
-    "Programming Languages: Python, C#, JavaScript, TypeScript.\n"
-    "Database & Cloud Technologies: PostgreSQL, SQL, AWS (S3, Lambda, Amplify), Render.\n"
-    "Frameworks & Development: .NET, ReactJS, React Native, Flask, HTML, CSS.\n"
-    "Version Control & DevOps: Git, GitHub, Docker, CI/CD (GitHub Actions).\n",
+Generative AI Chatbot (RAG)
+Tech: Python, Flask, LangChain, ChromaDB, Hugging Face
+• Retrieval-Augmented Generation chatbot with text + voice interfaces, persistent memory, and contextual responses.
 
-    "### Certifications\n"
-    "Gen AI Language Modeling with Transformers – IBM, Feb 2025\n"
-    "Advanced Deep Learning Specialist – IBM, Jan 2025\n"
-    "Machine Learning with Python (V2) – Coursera, Dec 2024\n",
+MLOps Pipeline — Housing Price Prediction
+Tech: DVC, MLflow, Docker, AWS EC2, Prometheus, Grafana, Apache Airflow, Evidently AI
+• End-to-end workflow with data/model versioning, CI/CD, containerized deployment, monitoring, and automated retraining.
 
-    "### Professional Experience\n"
-    "Software Developer | The Reynolds and Reynolds | Jan 2022 – July 2024\n"
-    "Led development & maintenance of KeyTrak applications (Desktop, Web, Mobile), impacting over 5,000+ businesses.\n"
-    "Spearheaded 20+ feature rollouts, improving deployment efficiency by 30% through a robust CI/CD pipeline.\n"
-    "Developed & optimized 30+ RESTful APIs, ensuring scalability & maintainability with SOLID principles.\n"
-    "Achieved over 95 percent unit test coverage with Jest, reducing production defects significantly.\n"
-    "Worked cross-functionally with teams of 10+ developers, ensuring timely delivery of software solutions.\n"
-    "Tools & Technologies Used: PostgreSQL, PowerShell, C#, .NET, ReactJS, TypeScript, React Native, Jest, "
-    "pgAdmin, Tortoise SVN, Visual Studio, VS Code, Phabricator, Jenkins, Slack, GitHub Actions.\n",
+AI Image Assistant
+Tech: Python, Streamlit, Google Gemini 1.5 Flash
+• Vision-language assistant for captioning and visual Q&A; deployed on Streamlit Community Cloud.
 
-    "### Notable Work Projects\n"
-    "SVN to GitHub Repository Migration: Successfully migrated a large SVN repository to GitHub, improving developer collaboration by 20%.\n"
-    "Reduced deployment time by 30% by automating processes using custom scripts & GitHub Actions.\n"
-    "Migrated 50+ build processes from Jenkins to GitHub Actions, enhancing automation & reliability.\n"
-    "Database Update Automation: Developed a PowerShell script & console app to automate database updates, reducing manual intervention by 90%.\n"
-    "Integrated automation into the CI/CD pipeline, decreasing update time by 50%.\n"
-    "Improved efficiency, ensuring 99 percent uptime and eliminating critical errors during database updates.\n",
+Sentiment Analysis Web App
+Tech: Python, Flask, React, Hugging Face Transformers
+• RoBERTa-based text sentiment analysis with responsive React UI and Flask API (CORS-enabled).
 
-    "### Personal Projects\n"
-    "Sentiment Analysis Web App (https://sentiment-analysis-app-33hz.onrender.com/)\n"
-    "Technologies: Python, Flask, ReactJS, Hugging Face Transformers, Flask-CORS, SciPy.\n"
-    "Built a responsive web app using ReactJS & Flask to analyze user text sentiment with a pre-trained RoBERTa model.\n"
-    "Designed a real-time interactive UI with seamless backend integration using Flask-CORS.\n"
-    "Housing Price Predictor Web App (https://github.com/ankitrijal2054/House_Price_Prediction)\n"
-    "Technologies: Python, Streamlit, Scikit-learn, Pandas.\n"
-    "Built a housing price prediction app using a Random Forest model with real-time user input.\n"
-    "Created robust preprocessing pipelines for categorical & numerical data handling.\n"
-    "Weather App (https://weather-app-3jmk.onrender.com/)\n"
-    "Technologies: Python, Flask, ReactJS, OpenWeatherMap API, Render.\n"
-    "Developed a fully responsive web app with real-time weather data fetching & display.\n"
-    "Conducted extensive testing for cross-platform compatibility.\n",
-
-    "### Education\n"
-    "Master’s in Artificial Intelligence – University of the Cumberlands, KY (Ongoing).\n"
-    "Bachelor's in Computer Science – East Central University, Ada, OK (Graduated in 2021).\n",
-
-    "### Personal Life\n"
-    "Hobbies & Interests: Watching movies that spark curiosity, playing soccer, hiking, traveling, and DIY projects.\n"
-    "Movies: Sci-Fi & Mind-Bending (Interstellar, Inception), Psychological Thriller & Action (The Dark Knight), "
-    "Inspirational & Drama (The Pursuit of Happyness).\n"
-    "Music: Country, Nepali Folk, and Rap.\n"
-    "Sports & Fitness: Soccer, Cricket, Hiking, Running, Gym.\n"
-    "Cooking & Cuisine: Nepali, Indian, and Mexican food.\n"
-    "Languages: English, Nepali, Hindi.\n"
-    "Life Philosophy: Simple living, high thinking.\n"
-    "Challenges & Personal Growth: Views challenges as opportunities for growth and learning.\n"
-    "Travel & Cultural Experiences: Passionate about traveling, exploring new places, and learning about different cultures.\n",
-
-    "### Goals & Aspirations\n"
-    "Transition into a Machine Learning Engineer role.\n"
-    "Work on AI-driven projects that impact real-world applications.\n"
-    "Contribute to open-source projects in AI & software development.\n"
-    "Earn AWS certification and gain expertise in cloud-based ML deployment.\n"
+Weather App
+Tech: Python, Flask, React, OpenWeatherMap API, Render
+• Real-time weather retrieval and display with cross-platform testing.
+"""
+    },
+    {
+        "section": "Technical Skills",
+        "category": "skills",
+        "keywords": "python, c#, typescript, react, fastapi, asp.net core, flask, postgres, redis, aws, docker, github actions, tdd, langchain, transformers",
+        "content": """
+Languages & Frameworks: Python, C#, JavaScript, TypeScript, ASP.NET Core, FastAPI, Flask, ReactJS, React Native
+Databases & Cloud: PostgreSQL, Redis, AWS (EC2, S3), GCP
+DevOps & Automation: GitHub Actions, Jenkins, Docker, Agile/Scrum, Unit Testing
+AI & ML: TensorFlow, Keras, PyTorch, scikit-learn, Hugging Face Transformers, LangChain, RAG, Gemini APIs, Amazon Bedrock
+MLOps: DVC, MLflow, Prometheus, Grafana, Apache Airflow, Evidently AI
+Assistants & Tools: GitHub Copilot, Amazon Q Developer, Cursor, Lovable
+Practices: TDD, OOP, SOLID Principles
+"""
+    },
+    {
+        "section": "Certifications",
+        "category": "certifications",
+        "keywords": "aws, ibm, google cloud, transformers, deep learning, machine learning with python",
+        "content": """
+AWS Generative AI for Developers — AWS
+Generative AI and LLMs: Architecture & Data Preparation — IBM
+Fundamentals of AI Agents using RAG and LangChain — IBM
+Production Machine Learning Systems — Google Cloud
+Advanced Deep Learning Specialist — IBM (Jan 2025)
+GenAI Language Modeling with Transformers — IBM (Feb 2025)
+Machine Learning with Python (V2) — Coursera (Dec 2024)
+"""
+    },
+    {
+        "section": "Notable Achievements",
+        "category": "achievements",
+        "keywords": "ci/cd, uptime, unit tests, performance, automation, reliability",
+        "content": """
+• Migrated 50+ build pipelines from Jenkins to GitHub Actions, boosting reliability and automation.
+• Achieved ~95% unit test coverage across KeyTrak modules, lowering production defects.
+• Reduced deployment time by ~30% through optimized CI/CD processes and custom scripts.
+• Improved system uptime to ~99% via automated database update processes and robust monitoring.
+"""
+    },
+    {
+        "section": "Personal Life & Interests",
+        "category": "personal",
+        "keywords": "movies, hiking, soccer, cricket, music, cuisine, languages, values",
+        "content": """
+Hobbies & Interests: Movies that spark curiosity, soccer, hiking, DIY projects, travel.
+Favorite Movies: Interstellar, Inception, The Dark Knight, The Pursuit of Happyness.
+Music: Country, Nepali Folk, Rap.
+Sports & Fitness: Soccer, Cricket, Running, Gym.
+Cuisine: Nepali, Indian, Mexican.
+Languages: English, Nepali, Hindi.
+Philosophy: “Simple living, high thinking.”
+Core Values: Integrity, growth mindset, empathy.
+"""
+    },
+    {
+        "section": "Goals & Aspirations",
+        "category": "goals",
+        "keywords": "ai engineer, ml engineer, open source, certifications, cloud, llm, rag, mlops",
+        "content": """
+• Transition into an AI/Machine Learning Engineer role.
+• Build AI products with real-world impact and ethical best practices.
+• Contribute to open-source AI and ML tooling.
+• Earn advanced AWS certifications; deepen cloud-based ML deployment.
+• Continue mastery of LLMs, RAG systems, and MLOps at production scale.
+"""
+    },
+    {
+        "section": "Aliases & Variants",
+        "category": "personal",
+        "keywords": "aliases, username, misspellings",
+        "content": """
+Common Name Variants & Usernames:
+• Ankit, Ankit R., Ankit Rijal
+• ankitrijal2054, ankitrjl2054
+Common misspelling: “Ankit Rajil”
+"""
+    },
 ]
 
-# --- Insert into ChromaDB ---
-if documents:
-    vector_store.add_texts(documents)
-    print(f"✅ {len(documents)} documents successfully added to ChromaDB!")
+# =========================================
+# Chunking with metadata
+# =========================================
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=800,           # ~200–300 words per chunk
+    chunk_overlap=120,
+    separators=["\n\n", "\n", ". ", " "]
+)
+
+docs: list[Document] = []
+ids: list[str] = []
+
+def make_id(section: str, idx: int, text: str) -> str:
+    h = hashlib.md5(text.strip().encode("utf-8")).hexdigest()[:12]
+    return f"{section.lower().replace(' ','_')}-{idx}-{h}"
+
+for block in sections:
+    raw_text = block["content"].strip()
+    if not raw_text:
+        continue
+
+    chunks = splitter.split_text(raw_text)
+    for i, chunk in enumerate(chunks):
+        meta = {
+            "source": "self_kb",
+            "version": KB_VERSION,
+            "updated_at": UPDATED_AT,
+            "section": block["section"],
+            "category": block["category"],
+            "keywords": block["keywords"],
+        }
+        docs.append(Document(page_content=chunk, metadata=meta))
+        ids.append(make_id(block["section"], i, chunk))
+
+# =========================================
+# Upsert into Chroma (add or dedupe by ID)
+# =========================================
+if docs:
+    # Optional: delete any existing docs with same IDs to avoid duplicates
+    try:
+        # Chroma wrapper supports delete by ids on underlying collection
+        vector_store._collection.delete(ids=ids)  # safe to attempt; ignore if not present
+    except Exception:
+        pass
+
+    vector_store.add_documents(documents=docs, ids=ids)
+    print(f"✅ Inserted {len(docs)} chunks into collection '{COLLECTION_NAME}'.")
+    print(f"💾 Chroma automatically persisted to: {PERSIST_DIR}")
 else:
-    print("⚠️ No documents found to insert.")
+    print("⚠️ No documents to insert.")

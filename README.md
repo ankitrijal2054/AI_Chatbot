@@ -93,8 +93,8 @@ This is a custom AI chatbot application built using **React.js** for the fronten
 
    ```json
    {
-     "HUGGINGFACE_API_KEY": "your-huggingface-api-key",
-     "XAI_API_KEY": "your-grok-ai-api-key",
+     "HF_TOKEN": "your-huggingface-api-key",
+     "GOOGLE_API_KEY": "your-grok-ai-api-key",
      "CARTESIA_API_KEY": "your-cartesia-api-key"
    }
    ```
