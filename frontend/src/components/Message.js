@@ -10,7 +10,7 @@ const Message = React.memo(({ msg, isTyping }) => {
         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
           isUser 
             ? 'bg-gradient-to-br from-purple-500 to-pink-500' 
-            : 'bg-white/10 backdrop-blur-sm border border-white/20'
+            : 'bg-white/10 dark:bg-white/10 bg-gray-200/50 backdrop-blur-sm border border-white/20 dark:border-white/20 border-gray-300'
         }`}>
           {isUser ? (
             <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -27,7 +27,7 @@ const Message = React.memo(({ msg, isTyping }) => {
         <div className={`px-4 py-3 rounded-2xl shadow-lg transition-all duration-300 ${
           isUser
             ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-br-sm'
-            : 'bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-bl-sm hover:bg-white/15'
+            : 'bg-white/10 dark:bg-white/10 bg-gray-100 backdrop-blur-md border border-white/20 dark:border-white/20 border-gray-300 text-gray-900 dark:text-white rounded-bl-sm hover:bg-white/15 dark:hover:bg-white/15 hover:bg-gray-200/70'
         }`}>
           <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">
             {msg.content}

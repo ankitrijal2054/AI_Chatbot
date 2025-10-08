@@ -1,33 +1,81 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+
+// Function to generate multiple box shadows for stars
+const generateStars = (count, color) => {
+  let shadows = [];
+  for (let i = 0; i < count; i++) {
+    const x = Math.floor(Math.random() * 2000);
+    const y = Math.floor(Math.random() * 2000);
+    shadows.push(`${x}px ${y}px ${color}`);
+  }
+  return shadows.join(', ');
+};
 
 const AnimatedBackground = () => {
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    // Check initial theme
+    const checkTheme = () => {
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      setIsDark(isDarkMode);
+    };
+
+    checkTheme();
+
+    // Watch for theme changes
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Generate stars based on theme - white for dark, dark for light
+    const starColor = isDark ? '#fff' : '#090a0f';
+    const starsSmall = generateStars(500, starColor);
+    const starsMedium = generateStars(150, starColor);
+    const starsBig = generateStars(50, starColor);
+
+    // Remove old style elements
+    const oldStyles = document.querySelectorAll('style[data-stars]');
+    oldStyles.forEach(style => style.remove());
+
+    // Apply box-shadows to star elements
+    const stars1 = document.getElementById('stars');
+    const stars2 = document.getElementById('stars2');
+    const stars3 = document.getElementById('stars3');
+
+    if (stars1) {
+      stars1.style.boxShadow = starsSmall;
+      const after1 = document.createElement('style');
+      after1.setAttribute('data-stars', 'true');
+      after1.innerHTML = `#stars:after { box-shadow: ${starsSmall}; }`;
+      document.head.appendChild(after1);
+    }
+
+    if (stars2) {
+      stars2.style.boxShadow = starsMedium;
+      const after2 = document.createElement('style');
+      after2.setAttribute('data-stars', 'true');
+      after2.innerHTML = `#stars2:after { box-shadow: ${starsMedium}; }`;
+      document.head.appendChild(after2);
+    }
+
+    if (stars3) {
+      stars3.style.boxShadow = starsBig;
+      const after3 = document.createElement('style');
+      after3.setAttribute('data-stars', 'true');
+      after3.innerHTML = `#stars3:after { box-shadow: ${starsBig}; }`;
+      document.head.appendChild(after3);
+    }
+  }, [isDark]);
+
   return (
     <>
-      {/* Animated Gradient Background */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 animate-gradient bg-[length:400%_400%]"></div>
-      
-      {/* Floating Orbs */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
-      </div>
-
-      {/* Subtle Particles/Stars Effect */}
-      <div className="fixed inset-0 -z-10">
-        {[...Array(50)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white/30 rounded-full animate-pulse-slow"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`,
-            }}
-          ></div>
-        ))}
-      </div>
+      <div id="stars"></div>
+      <div id="stars2"></div>
+      <div id="stars3"></div>
     </>
   );
 };

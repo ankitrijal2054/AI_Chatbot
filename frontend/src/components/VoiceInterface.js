@@ -14,7 +14,7 @@ const VoiceInterface = ({ voiceState, onStartListening }) => {
                 <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
               </svg>
             </button>
-            <p className="text-white/80 mt-6 text-lg font-medium">Click to speak</p>
+            <p className="text-gray-800 dark:text-white/80 mt-6 text-lg font-medium">Click to speak</p>
           </div>
         )}
 
@@ -27,7 +27,7 @@ const VoiceInterface = ({ voiceState, onStartListening }) => {
                 <div className="w-4 h-4 bg-white rounded-full animate-pulse"></div>
               </div>
             </div>
-            <p className="text-white/80 mt-6 text-lg font-medium animate-pulse">Listening...</p>
+            <p className="text-gray-800 dark:text-white/80 mt-6 text-lg font-medium animate-pulse">Listening...</p>
           </div>
         )}
 
@@ -36,7 +36,7 @@ const VoiceInterface = ({ voiceState, onStartListening }) => {
             <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-2xl">
               <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
             </div>
-            <p className="text-white/80 mt-6 text-lg font-medium">Processing...</p>
+            <p className="text-gray-800 dark:text-white/80 mt-6 text-lg font-medium">Processing...</p>
           </div>
         )}
 
@@ -57,7 +57,7 @@ const VoiceInterface = ({ voiceState, onStartListening }) => {
                 ))}
               </div>
             </div>
-            <p className="text-white/80 mt-6 text-lg font-medium animate-pulse">Speaking...</p>
+            <p className="text-gray-800 dark:text-white/80 mt-6 text-lg font-medium animate-pulse">Speaking...</p>
           </div>
         )}
       </div>
